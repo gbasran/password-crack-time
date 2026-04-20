@@ -1,0 +1,4 @@
+Metric,Validation,Test
+RMSE,1.271,1.025
+MAE,0.538,0.529
+R-squared,0.981,0.988

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Anatomy of a Password - DASC 4850</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; color: #eee; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+  .deck { position: relative; width: 100vw; height: 100vh; }
+  .slide {
+    position: absolute; top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 50px 80px 70px 80px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 220ms ease-in-out;
+    overflow: hidden;
+  }
+  .slide.active { opacity: 1; pointer-events: auto; }
+  .slide.title-slide { justify-content: center; align-items: center; text-align: center; }
+  .slide.title-slide h1 { font-size: 4.2em; line-height: 1.1; color: #e8d5b7; margin-bottom: 12px; }
+  .slide.title-slide .subtitle { font-size: 2em; color: #c9a96e; margin-top: 8px; }
+  .slide.title-slide .meta { font-size: 1.2em; color: #888; margin-top: 32px; }
+
+  h2 { font-size: 2.2em; color: #e8d5b7; margin-bottom: 20px; flex-shrink: 0; }
+  .body { flex: 1; display: flex; gap: 40px; align-items: stretch; min-height: 0; }
+  .body.col { flex-direction: column; }
+  .text-col { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+  .visual-col { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
+  .visual-col img { max-width: 100%; max-height: 75vh; border-radius: 8px; border: 1px solid #333; }
+  .full-img { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; }
+  .full-img img { max-width: 100%; max-height: 100%; border-radius: 8px; border: 1px solid #333; }
+
+  .bullets { list-style: none; padding: 0; }
+  .bullets li { font-size: 1.25em; line-height: 1.7; padding: 8px 0 8px 26px; position: relative; color: #ddd; }
+  .bullets li::before { content: ''; position: absolute; left: 0; top: 18px; width: 10px; height: 10px; border-radius: 50%; background: #c9a96e; }
+  .highlight { color: #c9a96e; font-weight: 600; }
+  .pw-example { font-family: 'JetBrains Mono', 'Courier New', monospace; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 4px; font-size: 0.95em; }
+
+  .stat-box { background: rgba(201,169,110,0.12); border: 1px solid #c9a96e; border-radius: 10px; padding: 18px 26px; margin-top: 18px; font-size: 1.15em; line-height: 1.6; }
+  .stat-box strong { color: #e8d5b7; }
+
+  .metrics-table { border-collapse: collapse; font-size: 1.15em; }
+  .metrics-table th { background: #c9a96e; color: #1a1a2e; padding: 10px 28px; text-align: left; font-weight: 600; }
+  .metrics-table td { padding: 8px 28px; border-bottom: 1px solid #333; }
+  .metrics-table td.big { font-size: 1.4em; color: #c9a96e; font-weight: 600; }
+
+  .hud { position: fixed; bottom: 16px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 24px; pointer-events: none; z-index: 10; }
+  .hud .left { font-size: 0.85em; color: #555; }
+  .hud .right { font-size: 0.95em; color: #888; font-weight: 600; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: #c9a96e; transition: width 220ms ease; z-index: 10; }
+
+  /* SVG diagram styles */
+  .diagram { width: 100%; max-width: 900px; height: auto; }
+  .diagram .box { fill: #2a2a44; stroke: #c9a96e; stroke-width: 2; rx: 6; }
+  .diagram .box-bad { fill: rgba(204,51,51,0.18); stroke: #cc3333; }
+  .diagram .box-good { fill: rgba(51,170,51,0.15); stroke: #33aa33; }
+  .diagram .label { fill: #eee; font-family: 'Segoe UI', sans-serif; font-size: 16px; }
+  .diagram .label-mono { fill: #c9a96e; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 14px; }
+  .diagram .label-small { fill: #888; font-family: 'Segoe UI', sans-serif; font-size: 12px; }
+  .diagram .arrow { stroke: #888; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+
+  .key-hint { position: fixed; bottom: 16px; right: 24px; font-size: 0.8em; color: #444; pointer-events: none; }
+  @media (max-width: 1100px) { .body { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 0: TITLE -->
+  <section class="slide title-slide active" style="padding: 0; position: relative; overflow: hidden;">
+    <img src="figures/slide_00_hero.png" alt="" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0.85;">
+    <div style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(26,26,46,0.0) 0%, rgba(26,26,46,0.55) 45%, rgba(26,26,46,0.92) 75%, rgba(26,26,46,1) 100%); z-index: 1;"></div>
+    <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; height: 100%; width: 100%; padding: 60px 100px; text-align: right;">
+      <h1 style="font-size: 4.4em; line-height: 1.05; color: #e8d5b7; margin-bottom: 14px;">The Anatomy<br>of a Password</h1>
+      <p style="font-size: 2em; color: #c9a96e; margin-top: 10px;">Predicting Crack Time<br>with Linear Regression</p>
+      <p style="font-size: 1.2em; color: #aaa; margin-top: 36px;">Gurman Basran &nbsp;&middot;&nbsp; DASC 4850 &nbsp;&middot;&nbsp; April 2026</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 1: RESEARCH QUESTION + DATASET -->
+  <section class="slide">
+    <h2>Question + Dataset</h2>
+    <div class="body">
+      <div class="text-col">
+        <p style="font-size: 1.4em; color: #e8d5b7; font-style: italic; line-height: 1.5; margin-bottom: 22px;">
+          "Which features of a password actually predict how long it takes to crack?"
+        </p>
+        <ul class="bullets">
+          <li><span class="highlight">~12k passwords</span> total, target = log<sub>10</sub>(crack time)</li>
+          <li><span class="highlight">10k real</span> from breach dumps: RockYou 2009, LinkedIn 2012, Adobe 2013, Dropbox 2016, Pwdb 2021 / COMB</li>
+          <li><span class="highlight">2k generated strong</span> passwords (password manager output)</li>
+          <li>Threat model: 10 billion GPU guesses / sec against the leaked hash dump</li>
+        </ul>
+      </div>
+      <div class="visual-col">
+        <img src="figures/slide_01_cracking.png" alt="GPU rack performing brute force password cracking">
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2: INSIGHT #1 — BIMODAL DISTRIBUTION -->
+  <section class="slide">
+    <h2>Insight 1: The Gap Between Weak and Strong</h2>
+    <div class="body">
+      <div class="text-col">
+        <ul class="bullets">
+          <li>Spike on the <span class="highlight">left</span>: real people, cracked in &lt;1 second</li>
+          <li>Strip on the <span class="highlight">right</span>: generated strong, ~10<sup>25</sup>+ seconds</li>
+          <li>Almost <span class="highlight">nothing in between</span></li>
+        </ul>
+        <div class="stat-box">
+          Either you reuse <span class="pw-example">password123</span> or you let a manager generate something random. There is no middle ground in real human behavior.
+        </div>
+      </div>
+      <div class="visual-col">
+        <img src="figures/01_crack_time_distribution.png" alt="Bimodal Crack Time Distribution">
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3: INSIGHT #2 — DICTIONARY WORDS -->
+  <section class="slide">
+    <h2>Insight 2: Dictionary Words Are A Death Sentence</h2>
+    <div class="body">
+      <div class="text-col">
+        <p style="font-size: 1.25em; color: #e8d5b7; font-style: italic; margin-bottom: 18px;">
+          "Do passwords containing common english words crack significantly faster?"
+        </p>
+        <div class="stat-box">
+          <strong>Two sample t-test:</strong> p &lt; 0.001 (effect is real, not random)<br><br>
+          Passwords <em>without</em> a dictionary word are<br>
+          <span class="highlight" style="font-size: 1.4em;">~14,000&times; harder to crack on average</span>
+        </div>
+        <p style="margin-top: 18px; color: #ccc; font-size: 1.05em; line-height: 1.5;">
+          So <span class="pw-example">Monkey123!</span> is essentially as crackable as <span class="pw-example">monkey</span>. Capitalizing, adding digits and symbols are <em>standard</em> modifications crackers test automatically.
+        </p>
+      </div>
+      <div class="visual-col">
+        <img src="figures/02_dictionary_comparison.png" alt="Dictionary Word vs Not — distributions barely overlap">
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4: MODEL + PERFORMANCE -->
+  <section class="slide">
+    <h2>The Model and How It Did</h2>
+    <div class="body">
+      <div class="text-col">
+        <ul class="bullets" style="margin-bottom: 18px;">
+          <li><span class="highlight">Ridge regression</span> (handles correlated features without flipping signs)</li>
+          <li>60 / 20 / 20 train / val / test split, cross validated</li>
+        </ul>
+        <table class="metrics-table">
+          <tr><th>Metric</th><th>Test Set</th></tr>
+          <tr><td>R-squared</td><td class="big">0.988</td></tr>
+          <tr><td>RMSE (log<sub>10</sub> sec)</td><td>1.032</td></tr>
+          <tr><td>MAE (log<sub>10</sub> sec)</td><td>0.531</td></tr>
+        </table>
+        <div class="stat-box" style="margin-top: 16px;">
+          Model explains <span class="highlight">~99%</span> of the variance in crack time across <span class="highlight">32 orders of magnitude</span>. Predictions typically within ~1 order of magnitude.
+        </div>
+      </div>
+      <div class="visual-col">
+        <img src="figures/05_pred_vs_actual.png" alt="Predicted vs Actual">
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5: WHAT MATTERS -->
+  <section class="slide">
+    <h2>Takeaway, Limitation, Next Step</h2>
+    <div class="body">
+      <div class="text-col">
+        <h3 style="font-size: 1.4em; color: #c9a96e; margin-bottom: 10px;">What the model says: length wins</h3>
+        <div class="stat-box" style="margin-top: 0;">
+          <span class="pw-example">correcthorsebatterystaple</span> (20 lowercase) &asymp; 26<sup>20</sup> = 2&times;10<sup>28</sup><br>
+          <span class="pw-example">K$3p9!aB</span> (8 mixed all 4 types) &asymp; 95<sup>8</sup> = 7&times;10<sup>15</sup><br>
+          <span class="highlight">Lowercase passphrase ~10<sup>12</sup>&times; stronger</span> despite a smaller alphabet.
+        </div>
+        <h3 style="font-size: 1.3em; color: #c9a96e; margin-top: 18px; margin-bottom: 8px;">Practical advice</h3>
+        <ul class="bullets" style="font-size: 1.1em;">
+          <li>Password manager + 16+ char random for everything</li>
+          <li>5 word diceware passphrase for the master password</li>
+        </ul>
+        <h3 style="font-size: 1.3em; color: #c9a96e; margin-top: 18px; margin-bottom: 8px;">Limitation &middot; Next step</h3>
+        <p style="color: #aaa; font-size: 1.0em; line-height: 1.5;">
+          Numbers assume MD5 speed; bcrypt/Argon2 shifts absolutes but not feature ranking. Next: deploy as a live strength checker in my Vaultwarden setup.
+        </p>
+      </div>
+      <div class="visual-col">
+        <img src="figures/slide_06_strength.png" alt="Long elegant chain dominating a small tangled knot — length beats complexity">
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <span class="left">DASC 4850 &middot; The Anatomy of a Password &middot; G. Basran</span>
+  <span class="right" id="counter">1 / 6</span>
+</div>
+<div class="key-hint">&larr; / &rarr; or space to navigate &middot; F for fullscreen</div>
+
+<script>
+(function () {
+  var slides = document.querySelectorAll('.slide');
+  var counter = document.getElementById('counter');
+  var progress = document.getElementById('progress');
+  var idx = 0;
+
+  function show(n) {
+    if (n < 0) n = 0;
+    if (n >= slides.length) n = slides.length - 1;
+    slides[idx].classList.remove('active');
+    idx = n;
+    slides[idx].classList.add('active');
+    counter.textContent = (idx + 1) + ' / ' + slides.length;
+    progress.style.width = ((idx + 1) / slides.length * 100) + '%';
+    if (history.replaceState) history.replaceState(null, '', '#' + (idx + 1));
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown' || e.key === 'l') {
+      e.preventDefault(); show(idx + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'h') {
+      e.preventDefault(); show(idx - 1);
+    } else if (e.key === 'Home') { e.preventDefault(); show(0); }
+    else if (e.key === 'End') { e.preventDefault(); show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  // click to advance, click left half to go back
+  document.addEventListener('click', function (e) {
+    if (e.target.tagName === 'A') return;
+    if (e.clientX < window.innerWidth / 4) show(idx - 1);
+    else show(idx + 1);
+  });
+
+  // open at hash if present
+  var initial = parseInt((location.hash || '').replace('#', ''), 10);
+  if (initial && initial > 0 && initial <= slides.length) show(initial - 1);
+  else { progress.style.width = (1 / slides.length * 100) + '%'; }
+})();
+</script>
+
+</body>
+</html>
