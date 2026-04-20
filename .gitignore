@@ -4,17 +4,6 @@ data/probable_12k.txt
 data/ignis_100k.txt
 data/rockyou_75.txt
 
-# intermediate / source files (compiled deliverables only)
-report.html
-*.tex
-*.aux
-*.log
-*.out
-*.toc
-*.synctex.gz
-build_notebook.py
-presentation_script.pdf
-
 # python
 __pycache__/
 *.pyc
