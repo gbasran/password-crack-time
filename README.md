@@ -9,5 +9,3 @@ the model hit R² of 0.988 on the held out test set across 32 orders of magnitud
 the notebook auto-downloads the breach data on first run so you can just clone and go. `pip install pandas numpy seaborn matplotlib scikit-learn scipy` and open final_project.ipynb. takes around 30 seconds end to end on a normal laptop.
 
 deliverables in the repo: final_project.ipynb has the full analysis with explainer text written assuming no cybersec background, report.pdf is the written writeup, slides.html is the deck (also live on github pages above). data/password_dataset.csv has the engineered features if you want to skip extraction and just play with the features directly.
-
-ai use: topic, dataset sourcing, feature design, and all interpretation are mine. modeling decisions like ridge over plain OLS came from MATH 3850 (numerical optimization and machine learning) which im taking concurrently. ai helped with the math formalization for the crack time formula, the cohens d formula, the scikit-learn API plumbing, and a few feature engineering edge cases. full breakdown in the ai use appendix at the bottom of the notebook and report.
