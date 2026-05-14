@@ -1,0 +1,15 @@
+length,flavour,median_logP,predicted_log10_rank,n_cracked,n_total,elapsed_s,budget
+6,random_uniform,-27.963,12.14,0,30,0.0,0
+6,human_shaped,-21.343,9.27,0,30,0.0,0
+8,random_uniform,-36.649,15.92,0,30,0.0,0
+8,human_shaped,-26.098,11.33,0,30,0.0,0
+10,random_uniform,-43.822,19.03,0,30,0.0,0
+10,human_shaped,-32.089,13.94,0,30,0.0,0
+12,random_uniform,-53.167,23.09,0,30,0.0,0
+12,human_shaped,-37.289,16.19,0,30,0.0,0
+14,random_uniform,-60.659,26.34,0,30,0.0,0
+14,human_shaped,-43.561,18.92,0,30,0.0,0
+16,random_uniform,-69.564,30.21,0,30,0.0,0
+16,human_shaped,-48.601,21.11,0,30,0.0,0
+20,random_uniform,-85.406,37.09,0,30,0.0,0
+20,human_shaped,-61.093,26.53,0,30,0.0,0
